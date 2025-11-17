@@ -2,6 +2,7 @@
 from openai import *
 from pathlib import Path
 from typing import Tuple
+from langchain_ollama import ChatOllama
 import google.generativeai as genai
 import anthropic
 import signal
@@ -18,6 +19,43 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 import boto3
 from ui.logger import Logger
+
+
+class OllamaLLM:
+    def __init__(
+        self,
+        url: str,
+        online_model_name: str,
+        logger: Logger,
+        temperature: float = 0.0,
+        system_role: str = "You are an experienced programmer and good at understanding programs written in mainstream programming languages.",
+        max_output_length: int = 4096,
+    ):
+        self.url = url
+        self.online_model_name = online_model_name
+        self.temperature = temperature
+        self.systemRole = system_role
+        self.logger = logger
+        self.max_output_length = max_output_length
+        self.online_model = ChatOllama(
+            base_url=url,
+            model=self.online_model_name,
+            temperature=self.temperature,
+            disable_streaming=True
+        )
+
+    def infer(self, message: str) -> str:
+        self.logger.print_log(self.online_model_name, "is running")
+        try:
+            messages = [
+                ("system", self.systemRole + "\n" + message)
+            ]
+            response = self.online_model.invoke(messages)
+            self.logger.print_log("Inference succeeded...")
+            return response.content
+        except Exception as e:
+            self.logger.print_log(f"API error: {e}")
+    
 
 
 class LLM:

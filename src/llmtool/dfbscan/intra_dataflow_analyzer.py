@@ -55,6 +55,8 @@ class IntraDataFlowAnalyzer(LLMTool):
         language: str,
         max_query_num: int,
         logger: Logger,
+        use_ollama: bool = False,
+        ollama_url: str = "",
     ) -> None:
         """
         :param model_name: the model name
@@ -63,7 +65,7 @@ class IntraDataFlowAnalyzer(LLMTool):
         :param max_query_num: the maximum number of queries if the model fails
         :param logger: the logger
         """
-        super().__init__(model_name, temperature, language, max_query_num, logger)
+        super().__init__(model_name, temperature, language, max_query_num, logger, use_ollama, ollama_url)
         self.prompt_file = (
             f"{BASE_PATH}/prompt/{language}/dfbscan/intra_dataflow_analyzer.json"
         )

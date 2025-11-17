@@ -83,14 +83,19 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-        )
+            # use_ollama=True,
+            # ollama_url="http://localhost:11434"
+        ) # Uncomment use_ollama and ollama_url for ollama usage
+        
         self.path_validator = PathValidator(
             self.model_name,
             self.temperature,
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-        )
+            # use_ollama=True,
+            # ollama_url="http://localhost:11434"
+        ) # Uncomment use_ollama and ollama_url for ollama usage
 
         self.src_values, self.sink_values = self.__obtain_extractor().extract_all()
         self.state = DFBScanState(self.src_values, self.sink_values)
