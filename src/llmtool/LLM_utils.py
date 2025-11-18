@@ -2,7 +2,7 @@
 from openai import *
 from pathlib import Path
 from typing import Tuple
-from langchain_ollama import ChatOllama
+import langchain_ollama
 import google.generativeai as genai
 import anthropic
 import signal
@@ -37,11 +37,10 @@ class OllamaLLM:
         self.systemRole = system_role
         self.logger = logger
         self.max_output_length = max_output_length
-        self.online_model = ChatOllama(
+        self.online_model = langchain_ollama.llms.OllamaLLM(
             base_url=url,
             model=self.online_model_name,
             temperature=self.temperature,
-            disable_streaming=True
         )
 
     def infer(self, message: str) -> str:
@@ -52,7 +51,7 @@ class OllamaLLM:
             ]
             response = self.online_model.invoke(messages)
             self.logger.print_log("Inference succeeded...")
-            return response.content
+            return response
         except Exception as e:
             self.logger.print_log(f"API error: {e}")
     
