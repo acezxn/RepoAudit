@@ -158,7 +158,7 @@ class IntraDataFlowAnalyzer(LLMTool):
                 continue
 
             # Check for path header
-            header_match = path_header_re.match(line)
+            header_match = re.search(path_header_re, line)
             if header_match:
                 if current_path:
                     paths.append(current_path)
@@ -169,7 +169,7 @@ class IntraDataFlowAnalyzer(LLMTool):
                 }
             else:
                 # Check for propagation detail line
-                detail_match = detail_re.match(line)
+                detail_match = re.search(detail_re, line)
                 if detail_match and current_path is not None:
                     detail = {
                         "type": detail_match.group(1).strip(),
