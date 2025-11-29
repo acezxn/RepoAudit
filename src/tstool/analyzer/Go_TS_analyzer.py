@@ -15,7 +15,7 @@ class Go_TSAnalyzer(TSAnalyzer):
     TSAnalyzer for Go source files using tree-sitter.
     Implements Go-specific parsing and analysis.
     """
-    
+
     def extract_scope_info(self, tree: tree_sitter.Tree) -> None:
         """
         Parse source code to extract scope topography.
@@ -23,7 +23,7 @@ class Go_TSAnalyzer(TSAnalyzer):
         :param tree: Parsed syntax tree
         """
         pass
-    
+
     def extract_nonlocal_info(self) -> None:
         """
         Traverse the scopes to identify declarations of non locals.
@@ -375,4 +375,4 @@ class Go_TSAnalyzer(TSAnalyzer):
         :param program_root: Program root node
         :return: A list of extracted nodes
         """
-        pass
+        return []
