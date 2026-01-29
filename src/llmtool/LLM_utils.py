@@ -21,42 +21,6 @@ import boto3
 from ui.logger import Logger
 
 
-class OllamaLLM:
-    def __init__(
-        self,
-        url: str,
-        online_model_name: str,
-        logger: Logger,
-        temperature: float = 0.0,
-        system_role: str = "You are an experienced programmer and good at understanding programs written in mainstream programming languages.",
-        max_output_length: int = 4096,
-    ):
-        self.url = url
-        self.online_model_name = online_model_name
-        self.temperature = temperature
-        self.systemRole = system_role
-        self.logger = logger
-        self.max_output_length = max_output_length
-        self.online_model = langchain_ollama.llms.OllamaLLM(
-            base_url=url,
-            model=self.online_model_name,
-            temperature=self.temperature,
-        )
-
-    def infer(self, message: str) -> str:
-        self.logger.print_log(self.online_model_name, "is running")
-        try:
-            messages = [
-                ("system", self.systemRole + "\n" + message)
-            ]
-            response = self.online_model.invoke(messages)
-            self.logger.print_log("Inference succeeded...")
-            return response
-        except Exception as e:
-            self.logger.print_log(f"API error: {e}")
-    
-
-
 class LLM:
     """
     An online inference model using different LLMs:
@@ -64,12 +28,14 @@ class LLM:
     - OpenAI: GPT-3.5, GPT-4, o3-mini
     - DeepSeek: V3, R1
     - Claude: 3.5 and 3.7
+    - Ollama: any LLM deployed
     """
 
     def __init__(
         self,
         online_model_name: str,
         logger: Logger,
+        use_ollama: bool = False,
         temperature: float = 0.0,
         system_role: str = "You are an experienced programmer and good at understanding programs written in mainstream programming languages.",
         max_output_length: int = 4096,
@@ -82,6 +48,7 @@ class LLM:
         self.systemRole = system_role
         self.logger = logger
         self.max_output_length = max_output_length
+        self.use_ollama = use_ollama
         return
 
     def infer(
@@ -89,19 +56,22 @@ class LLM:
     ) -> Tuple[str, int, int]:
         self.logger.print_log(self.online_model_name, "is running")
         output = ""
-        if "gemini" in self.online_model_name:
-            output = self.infer_with_gemini(message)
-        elif "gpt" in self.online_model_name:
-            output = self.infer_with_openai_model(message)
-        elif "o3-mini" in self.online_model_name:
-            output = self.infer_with_o3_mini_model(message)
-        elif "claude" in self.online_model_name:
-            output = self.infer_with_claude_key(message)
-            # output = self.infer_with_claude_aws_bedrock(message)
-        elif "deepseek" in self.online_model_name:
-            output = self.infer_with_deepseek_model(message)
+        if self.use_ollama:
+            output = self.infer_with_ollama(message)
         else:
-            raise ValueError("Unsupported model name")
+            if "gemini" in self.online_model_name:
+                output = self.infer_with_gemini(message)
+            elif "gpt" in self.online_model_name:
+                output = self.infer_with_openai_model(message)
+            elif "o3-mini" in self.online_model_name:
+                output = self.infer_with_o3_mini_model(message)
+            elif "claude" in self.online_model_name:
+                output = self.infer_with_claude_key(message)
+                # output = self.infer_with_claude_aws_bedrock(message)
+            elif "deepseek" in self.online_model_name:
+                output = self.infer_with_deepseek_model(message)
+            else:
+                raise ValueError("Unsupported model name")
 
         input_token_cost = (
             0
@@ -403,3 +373,20 @@ class LLM:
                     self.logger.print_log("Max retries reached for Claude API")
             time.sleep(2)
         return ""
+
+    def infer_with_ollama(self, message):
+        try:
+            url = os.environ.get("OLLAMA_URL")
+            client = langchain_ollama.llms.OllamaLLM(
+                base_url=url,
+                model=self.online_model_name,
+                temperature=self.temperature,
+            )
+            messages = [
+                ("system", self.systemRole + "\n" + message)
+            ]
+            response = client.invoke(messages)
+            self.logger.print_log("Inference succeeded...")
+            return response
+        except Exception as e:
+            self.logger.print_log(f"API error: {e}")

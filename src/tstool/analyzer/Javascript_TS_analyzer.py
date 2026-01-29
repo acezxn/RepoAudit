@@ -189,6 +189,9 @@ class Javascript_TSAnalyzer(TSAnalyzer):
         all_variable_declarator_nodes = find_nodes_by_type(
             tree.root_node, "variable_declarator"
         )
+        all_assignment_expression_nodes = find_nodes_by_type(
+            tree.root_node, "assignment_expression"
+        )
 
         for node in all_function_header_nodes:
             function_name = ""
@@ -220,6 +223,33 @@ class Javascript_TSAnalyzer(TSAnalyzer):
             name_node = node.child_by_field_name("name")
             value_node = node.child_by_field_name("value")
 
+            if not name_node or not value_node:
+                continue
+
+            if (
+                value_node.type != "arrow_function"
+                and value_node.type != "function_expression"
+            ):
+                continue
+
+            function_name = source_code[name_node.start_byte : name_node.end_byte]
+            start_line = source_code[: node.start_byte].count("\n") + 1
+            end_line = source_code[: node.end_byte].count("\n") + 1
+            function_id = len(self.functionRawDataDic) + 1
+
+            self.functionRawDataDic[function_id] = (
+                function_name,
+                start_line,
+                end_line,
+                node,
+            )
+            self.functionToFile[function_id] = file_path
+            self.functionNameToId.setdefault(function_name, set()).add(function_id)
+            
+        for node in all_assignment_expression_nodes:
+            name_node = node.child_by_field_name("left")
+            value_node = node.child_by_field_name("right")
+            
             if not name_node or not value_node:
                 continue
 

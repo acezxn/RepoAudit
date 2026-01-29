@@ -41,21 +41,13 @@ class LLMTool(ABC):
         self.language = language
         self.max_query_num = max_query_num
         self.logger = logger
-        self.use_ollama = use_ollama
 
-        if self.use_ollama:
-            self.model = OllamaLLM(
-                url=ollama_url,
-                online_model_name=model_name,
-                logger=self.logger,
-                temperature=temperature,
-            )
-        else:
-            self.model = LLM(
-                online_model_name=model_name,
-                logger=self.logger,
-                temperature=temperature,
-            )
+        self.model = LLM(
+            online_model_name=model_name,
+            logger=self.logger,
+            temperature=temperature,
+            use_ollama=use_ollama,
+        )
         self.cache: Dict[LLMToolInput, LLMToolOutput] = {}
 
         self.input_token_cost = 0
@@ -94,19 +86,12 @@ class LLMTool(ABC):
             if single_query_num > self.max_query_num:
                 break
             single_query_num += 1
-            
-            response = ""
-            
-            if self.use_ollama:
-                response = self.model.infer(prompt)
-            
-            else:
-                response, input_token_cost, output_token_cost = self.model.infer(
-                    prompt, True
-                )
-                self.input_token_cost += input_token_cost
-                self.output_token_cost += output_token_cost
-                            
+                        
+            response, input_token_cost, output_token_cost = self.model.infer(
+                prompt, True
+            )
+            self.input_token_cost += input_token_cost
+            self.output_token_cost += output_token_cost     
             self.logger.print_log("Response:", "\n", response)
             output = self._parse_response(response, input)
 

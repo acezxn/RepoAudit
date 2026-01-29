@@ -84,6 +84,7 @@ class Javascript_NPD_Extractor(DFBScanExtractor):
         root_node = function.parse_tree_root_node
         source_code = self.ts_analyzer.code_in_files[function.file_path]
         file_path = function.file_path
+        nodes = []
 
         nodes = find_nodes_by_type(root_node, "variable_declarator")
         nodes.extend(find_nodes_by_type(root_node, "assignment_expression"))
@@ -92,13 +93,18 @@ class Javascript_NPD_Extractor(DFBScanExtractor):
 
         sources = []
 
-        # Look for nullish value nodes
         for node in nodes:
             is_seed_node = False
 
-            for child in node.children:
-                if child.type in self.NULLISH_VALUES:
-                    is_seed_node = True
+            if len(node.children) == 0 and node.type == "return_statement":
+                # Return with no value returns undefined
+                is_seed_node = True
+                
+            else:
+                # Look for nullish value nodes
+                for child in node.children:
+                    if child.type in self.NULLISH_VALUES:
+                        is_seed_node = True
 
             if is_seed_node:
                 line_number = source_code[: node.start_byte].count("\n") + 1
