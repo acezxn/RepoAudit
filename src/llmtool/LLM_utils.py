@@ -3,6 +3,7 @@ from openai import *
 from pathlib import Path
 from typing import Tuple
 import langchain_ollama
+import langchain_openai
 import google.generativeai as genai
 import anthropic
 import signal
@@ -28,19 +29,25 @@ class LLM:
     - OpenAI: GPT-3.5, GPT-4, o3-mini
     - DeepSeek: V3, R1
     - Claude: 3.5 and 3.7
-    - Ollama: any LLM deployed
+    
+    With different deploy methods:
+    - managed: managed by external organizations (Eg, OpenAI, Google, etc)
+    - ollama: deployed locally with ollama
+    - vllm: deployed locally with vllm
     """
+    
+    VALID_DEPLOY_OPTIONS = {"managed", "ollama", "vllm"}
 
     def __init__(
         self,
-        online_model_name: str,
+        model_name: str,
         logger: Logger,
-        use_ollama: bool = False,
+        deploy_method: str = "managed",
         temperature: float = 0.0,
         system_role: str = "You are an experienced programmer and good at understanding programs written in mainstream programming languages.",
         max_output_length: int = 4096,
     ) -> None:
-        self.online_model_name = online_model_name
+        self.model_name = model_name
         self.encoding = tiktoken.encoding_for_model(
             "gpt-3.5-turbo-0125"
         )  # We only use gpt-3.5 to measure token cost
@@ -48,30 +55,36 @@ class LLM:
         self.systemRole = system_role
         self.logger = logger
         self.max_output_length = max_output_length
-        self.use_ollama = use_ollama
+        
+        if deploy_method not in LLM.VALID_DEPLOY_OPTIONS:
+            raise ValueError("Invalid deploy method. Expected methods are 'managed', 'ollama', 'vllm'")
+        
+        self.deploy_method = deploy_method
         return
 
     def infer(
         self, message: str, is_measure_cost: bool = False
     ) -> Tuple[str, int, int]:
-        self.logger.print_log(self.online_model_name, "is running")
+        self.logger.print_log(self.model_name, "is running")
         output = ""
-        if self.use_ollama:
-            output = self.infer_with_ollama(message)
-        else:
-            if "gemini" in self.online_model_name:
+        if self.deploy_method == "managed":
+            if "gemini" in self.model_name:
                 output = self.infer_with_gemini(message)
-            elif "gpt" in self.online_model_name:
+            elif "gpt" in self.model_name:
                 output = self.infer_with_openai_model(message)
-            elif "o3-mini" in self.online_model_name:
+            elif "o3-mini" in self.model_name:
                 output = self.infer_with_o3_mini_model(message)
-            elif "claude" in self.online_model_name:
+            elif "claude" in self.model_name:
                 output = self.infer_with_claude_key(message)
                 # output = self.infer_with_claude_aws_bedrock(message)
-            elif "deepseek" in self.online_model_name:
+            elif "deepseek" in self.model_name:
                 output = self.infer_with_deepseek_model(message)
             else:
                 raise ValueError("Unsupported model name")
+        elif self.deploy_method == "ollama":
+            output = self.infer_with_ollama(message)
+        elif self.deploy_method == "vllm":
+            output = self.infer_with_vllm(message)
 
         input_token_cost = (
             0
@@ -99,7 +112,7 @@ class LLM:
 
     def infer_with_gemini(self, message: str) -> str:
         """Infer using the Gemini model from Google Generative AI"""
-        gemini_model = genai.GenerativeModel(self.online_model_name)
+        gemini_model = genai.GenerativeModel(self.model_name)
 
         def call_api():
             message_with_role = self.systemRole + "\n" + message
@@ -144,7 +157,7 @@ class LLM:
         def call_api():
             client = OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model=self.online_model_name,
+                model=self.model_name,
                 messages=model_input,
                 temperature=self.temperature,
             )
@@ -174,7 +187,7 @@ class LLM:
         def call_api():
             client = OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model=self.online_model_name, messages=model_input
+                model=self.model_name, messages=model_input
             )
             return response.choices[0].message.content
 
@@ -207,7 +220,7 @@ class LLM:
         def call_api():
             client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
             response = client.chat.completions.create(
-                model=self.online_model_name,
+                model=self.model_name,
                 messages=model_input,
                 temperature=self.temperature,
             )
@@ -237,7 +250,7 @@ class LLM:
             {"role": "user", "content": message},
         ]
 
-        if "3.5" in self.online_model_name:
+        if "3.5" in self.model_name:
             model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
             body = json.dumps(
                 {
@@ -248,7 +261,7 @@ class LLM:
                     "top_k": 50,
                 }
             )
-        if "3.7" in self.online_model_name:
+        if "3.7" in self.model_name:
             model_id = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
             body = json.dumps(
                 {
@@ -279,9 +292,9 @@ class LLM:
 
             response = json.loads(response)
 
-            if "3.5" in self.online_model_name:
+            if "3.5" in self.model_name:
                 result = response["content"][0]["text"]
-            if "3.7" in self.online_model_name:
+            if "3.7" in self.model_name:
                 result = response["content"][1]["text"]
             return result
 
@@ -318,7 +331,7 @@ class LLM:
             client = anthropic.Anthropic(api_key=api_key)
 
             # Determine model and settings based on version
-            if "3.7" in self.online_model_name:
+            if "3.7" in self.model_name:
                 # Claude 3.7 with thinking mode enabled by default
                 model_name = "claude-3-7-sonnet-20250219"
                 api_params = {
@@ -344,7 +357,7 @@ class LLM:
 
             # Extract response text based on model type
             if (
-                "3.7" in self.online_model_name
+                "3.7" in self.model_name
                 and hasattr(response, "content")
                 and len(response.content) > 1
             ):
@@ -362,7 +375,7 @@ class LLM:
                 output = self.run_with_timeout(call_api, timeout=100)
                 if output:
                     self.logger.print_log(
-                        f"Claude API call successful with {self.online_model_name}"
+                        f"Claude API call successful with {self.model_name}"
                     )
                     return output
             except Exception as e:
@@ -379,11 +392,30 @@ class LLM:
             url = os.environ.get("OLLAMA_URL")
             client = langchain_ollama.llms.OllamaLLM(
                 base_url=url,
-                model=self.online_model_name,
+                model=self.model_name,
                 temperature=self.temperature,
             )
             messages = [
-                ("system", self.systemRole + "\n" + message)
+                ("system", self.systemRole),
+                ("human", message)
+            ]
+            response = client.invoke(messages)
+            self.logger.print_log("Inference succeeded...")
+            return response
+        except Exception as e:
+            self.logger.print_log(f"API error: {e}")
+            
+    def infer_with_vllm(self, message):
+        try:
+            url = os.environ.get("VLLM_URL")
+            client = langchain_openai.ChatOpenAI(
+                model=self.model_name,
+                base_url=url,
+                temperature=self.temperature,
+            )
+            messages = [
+                ("system", self.systemRole),
+                ("human", message)
             ]
             response = client.invoke(messages)
             self.logger.print_log("Inference succeeded...")

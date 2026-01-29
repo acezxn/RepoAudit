@@ -83,7 +83,7 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-            use_ollama=True,
+            deploy_method="vllm",
         )
         
         self.path_validator = PathValidator(
@@ -92,7 +92,7 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-            use_ollama=True,
+            use_ollama="vllm",
         )
 
         self.src_values, self.sink_values = self.__obtain_extractor().extract_all()

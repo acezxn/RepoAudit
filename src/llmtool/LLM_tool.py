@@ -32,8 +32,7 @@ class LLMTool(ABC):
         language: str,
         max_query_num: int,
         logger: Logger,
-        use_ollama: bool = False,
-        ollama_url: str = "",
+        deploy_method: str = "managed",
     ) -> None:
         self.language = language
         self.model_name = model_name
@@ -46,7 +45,7 @@ class LLMTool(ABC):
             online_model_name=model_name,
             logger=self.logger,
             temperature=temperature,
-            use_ollama=use_ollama,
+            deploy_method=deploy_method,
         )
         self.cache: Dict[LLMToolInput, LLMToolOutput] = {}
 
