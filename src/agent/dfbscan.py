@@ -44,6 +44,7 @@ class DFBScanAgent(Agent):
         language: str,
         ts_analyzer: TSAnalyzer,
         model_name: str,
+        deploy_method: str,
         temperature: float,
         call_depth: int,
         max_neural_workers: int = 30,
@@ -83,7 +84,7 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-            deploy_method="vllm",
+            deploy_method=deploy_method,
         )
         
         self.path_validator = PathValidator(
@@ -92,7 +93,7 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-            deploy_method="vllm",
+            deploy_method=deploy_method,
         )
 
         self.src_values, self.sink_values = self.__obtain_extractor().extract_all()

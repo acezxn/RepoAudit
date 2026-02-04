@@ -55,6 +55,13 @@ We are keeping implementing more agents and will open-source them very soon. Uti
    export ANTHROPIC_API_KEY=xxxxxx >> ~/.bashrc
    ```
 
+5. (Optional) If you plan to use locally deployed models (via Ollama or vLLM), configure the following environment variables:
+
+   ```sh
+   export OLLAMA_URL="http://xxxxx:xx" >> ~/.bashrc
+   export VLLM_URL="http://xxxxx:xx/v1" >> ~/.bashrc
+   ```
+
 ## Quick Start
 
 Getting started with RepoAudit is simple — you can run a full scan on a project in just a few commands.

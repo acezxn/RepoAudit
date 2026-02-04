@@ -44,6 +44,7 @@ class RepoAudit:
         self.code_in_files: Dict[str, str] = {}
 
         self.model_name = args.model_name
+        self.model_deploy_method = args.model_deploy_method
         self.temperature = args.temperature
         self.call_depth = args.call_depth
         self.max_symbolic_workers = args.max_symbolic_workers
@@ -112,6 +113,7 @@ class RepoAudit:
                 self.language,
                 self.ts_analyzer,
                 self.model_name,
+                self.model_deploy_method,
                 self.temperature,
                 self.call_depth,
                 self.max_neural_workers,
@@ -216,6 +218,7 @@ def configure_args():
 
     # Common parameters for dfbscan
     parser.add_argument("--model-name", help="The name of LLMs")
+    parser.add_argument("--model-deploy-method", required=True, help="How the LLMs were deployed", choices=["managed", "ollama", "vllm"])
     parser.add_argument(
         "--temperature", type=float, default=0.5, help="Temperature for inference"
     )

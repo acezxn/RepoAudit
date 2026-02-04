@@ -5,8 +5,9 @@ IFS=$'\n\t'
 # --- Defaults ---
 LANGUAGE="Python"
 MODEL="claude-3.7"
+MODEL_DEPLOY_METHOD="managed" # allowed: managed, ollama, vllm
 DEFAULT_PROJECT_NAME="toy"
-DEFAULT_BUG_TYPE="NPD"     # allowed: MLK, NPD, UAF
+DEFAULT_BUG_TYPE="NPD"        # allowed: MLK, NPD, UAF
 SCAN_TYPE="dfbscan"
 
 # Construct the default project *path* from LANGUAGE + DEFAULT_PROJECT_NAME
@@ -71,6 +72,7 @@ fi
 python3 repoaudit.py \
   --language "$LANGUAGE" \
   --model-name "$MODEL" \
+  --model-deploy-method "$MODEL_DEPLOY_METHOD"
   --project-path "$PROJECT_PATH_ABS" \
   --bug-type "$BUG_TYPE" \
   --is-reachable \
