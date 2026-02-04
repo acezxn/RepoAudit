@@ -92,7 +92,7 @@ class DFBScanAgent(Agent):
             self.language,
             self.MAX_QUERY_NUM,
             self.logger,
-            use_ollama="vllm",
+            deploy_method="vllm",
         )
 
         self.src_values, self.sink_values = self.__obtain_extractor().extract_all()

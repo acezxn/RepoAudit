@@ -419,6 +419,6 @@ class LLM:
             ]
             response = client.invoke(messages)
             self.logger.print_log("Inference succeeded...")
-            return response
+            return response.text
         except Exception as e:
             self.logger.print_log(f"API error: {e}")

@@ -42,7 +42,7 @@ class LLMTool(ABC):
         self.logger = logger
 
         self.model = LLM(
-            online_model_name=model_name,
+            model_name=model_name,
             logger=self.logger,
             temperature=temperature,
             deploy_method=deploy_method,
